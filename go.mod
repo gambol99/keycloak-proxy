@@ -4,6 +4,7 @@ require (
 	github.com/PuerkitoBio/purell v1.1.0
 	github.com/PuerkitoBio/urlesc v0.0.0-20170810143723-de5bf2ad4578 // indirect
 	github.com/armon/go-proxyproto v0.0.0-20180202201750-5b7edb60ff5f
+	github.com/client9/misspell v0.3.4 // indirect
 	github.com/codegangsta/negroni v1.0.0 // indirect
 	github.com/coreos/go-oidc v0.0.0-20171020180921-e860bd55bfa7
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect

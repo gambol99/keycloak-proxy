@@ -1,3 +1,11 @@
+# Signal Louketo Fork
+
+Signal AI specific additions to Louketo Proxy
+
+## Releasing
+
+To release changes follow the instructions in [the releasing documentation](docs/release.md). This uses GitHub Actions.
+
 # EOL notice
 
 Louketo Proxy reached end of line in November 21, 2020. This means that we no longer support, or update it. The details are available [here](https://www.keycloak.org/2020/08/sunsetting-louketo-project.adoc).

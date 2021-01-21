@@ -16,7 +16,9 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"net/http"
+	"net/url"
 	"testing"
 	"time"
 )
@@ -282,6 +284,16 @@ func TestAuthorizationURL(t *testing.T) {
 	newFakeProxy(nil).RunTests(t, requests)
 }
 
+func getStateQueryParameter(t *testing.T, redirectUrl string) string {
+	stateParameter := StateParameter{Url: redirectUrl}
+	res, err := json.Marshal(stateParameter)
+	if err != nil {
+		t.Fatalf("Failed to marshall state parameter to string: %s", err)
+		return ""
+	}
+	return url.QueryEscape(string(res))
+}
+
 func TestCallbackURL(t *testing.T) {
 	cfg := newFakeKeycloakConfig()
 	requests := []fakeRequest{
@@ -301,13 +313,13 @@ func TestCallbackURL(t *testing.T) {
 			ExpectedCode:     http.StatusSeeOther,
 		},
 		{
-			URI:              cfg.WithOAuthURI(callbackURL) + "?code=fake&state=/admin",
+			URI:              cfg.WithOAuthURI(callbackURL) + "?code=fake&state=" + getStateQueryParameter(t, "/admin?some-param=true&some-other=false"),
 			ExpectedCookies:  map[string]string{cfg.CookieAccessName: ""},
-			ExpectedLocation: "/",
+			ExpectedLocation: "/admin?some-param=true&some-other=false",
 			ExpectedCode:     http.StatusSeeOther,
 		},
 		{
-			URI:              cfg.WithOAuthURI(callbackURL) + "?code=fake&state=L2FkbWlu",
+			URI:              cfg.WithOAuthURI(callbackURL) + "?code=fake&state=" + getStateQueryParameter(t, "/"),
 			ExpectedCookies:  map[string]string{cfg.CookieAccessName: ""},
 			ExpectedLocation: "/",
 			ExpectedCode:     http.StatusSeeOther,

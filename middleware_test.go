@@ -16,6 +16,7 @@ limitations under the License.
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -73,6 +74,8 @@ type fakeRequest struct {
 
 	// advanced test cases
 	ExpectedCookiesValidator map[string]func(string) bool
+
+	ExpectedStateUrl string
 }
 
 type fakeProxy struct {
@@ -223,11 +226,24 @@ func (f *fakeProxy) RunTests(t *testing.T, requests []fakeRequest) {
 		if c.ExpectedCode != 0 {
 			assert.Equal(t, c.ExpectedCode, status, "case %d, expected status code: %d, got: %d", i, c.ExpectedCode, status)
 		}
-		if c.ExpectedLocation != "" {
+		if c.ExpectedLocation != "" || c.ExpectedStateUrl != "" {
 			l, _ := url.Parse(resp.Header().Get("Location"))
-			assert.True(t, strings.Contains(l.String(), c.ExpectedLocation), "expected location to contain %s", l.String())
-			if l.Query().Get("state") != "" {
-				state, err := uuid.FromString(l.Query().Get("state"))
+			if c.ExpectedLocation != "" {
+				assert.True(t, strings.Contains(l.String(), c.ExpectedLocation), "expected location to contain %s", l.String())
+			}
+			stateStr := l.Query().Get("state")
+			if stateStr != "" {
+				stateParam := StateParameter{}
+				err := json.Unmarshal([]byte(stateStr), &stateParam)
+				if err != nil {
+					assert.Fail(t, "failed to deserialise state parameter from json, got: %s with error %s", stateStr, err)
+				}
+
+				if c.ExpectedStateUrl != "" {
+					assert.Equal(t, c.ExpectedStateUrl, stateParam.Url, "expected state url to contain %s", stateParam.Url)
+				}
+
+				state, err := uuid.FromString(stateParam.Token)
 				if err != nil {
 					assert.Fail(t, "expected state parameter with valid UUID, got: %s with error %s", state.String(), err)
 				}

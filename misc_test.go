@@ -33,9 +33,10 @@ func TestRedirectToAuthorizationUnauthorized(t *testing.T) {
 func TestRedirectToAuthorization(t *testing.T) {
 	requests := []fakeRequest{
 		{
-			URI:              "/admin",
+			URI:              "/admin?blah=1",
 			Redirects:        true,
 			ExpectedLocation: "/oauth/authorize?state",
+			ExpectedStateUrl: "/admin?blah=1",
 			ExpectedCode:     http.StatusSeeOther,
 		},
 	}

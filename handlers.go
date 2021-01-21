@@ -58,11 +58,23 @@ func (r *oauthProxy) getRedirectionURL(w http.ResponseWriter, req *http.Request)
 		redirect = r.config.RedirectionURL
 	}
 
-	state, _ := req.Cookie(requestStateCookie)
-	if state != nil && req.URL.Query().Get("state") != state.Value {
-		r.log.Error("state parameter mismatch")
-		w.WriteHeader(http.StatusForbidden)
-		return ""
+	if r.config.EnableCSRFCheck {
+		state, _ := req.Cookie(requestStateCookie)
+
+		stateParameter := req.URL.Query().Get("state")
+		stateParam := StateParameter{}
+		if stateParameter != "" {
+			err := json.Unmarshal([]byte(stateParameter), &stateParam)
+			if err != nil {
+				r.log.Warn("failed to deserialise state parameter from json")
+			}
+		}
+
+		if state != nil && stateParam.Token != state.Value {
+			r.log.Error("state parameter mismatch")
+			w.WriteHeader(http.StatusForbidden)
+			return ""
+		}
 	}
 	return fmt.Sprintf("%s%s", redirect, r.config.WithOAuthURI("callback"))
 }
@@ -209,8 +221,17 @@ func (r *oauthProxy) oauthCallbackHandler(w http.ResponseWriter, req *http.Reque
 
 	// step: decode the request variable
 	redirectURI := "/"
-	if req.URL.Query().Get("state") != "" {
-		if encodedRequestURI, _ := req.Cookie(requestURICookie); encodedRequestURI != nil {
+	stateParameter := req.URL.Query().Get("state")
+	if stateParameter != "" {
+		stateParam := StateParameter{}
+		err := json.Unmarshal([]byte(stateParameter), &stateParam)
+		if err != nil {
+			r.log.Warn("failed to deserialise state parameter from json")
+		}
+
+		if stateParam.Url != "" {
+			redirectURI = stateParam.Url
+		} else if encodedRequestURI, _ := req.Cookie(requestURICookie); encodedRequestURI != nil {
 			decoded, _ := base64.StdEncoding.DecodeString(encodedRequestURI.Value)
 			redirectURI = string(decoded)
 		}

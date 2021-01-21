@@ -252,6 +252,8 @@ type Config struct {
 	LocalhostMetrics bool `json:"localhost-metrics" yaml:"localhost-metrics" usage:"enforces the metrics page can only been requested from 127.0.0.1"`
 	// EnableCompression enables gzip compression for response
 	EnableCompression bool `json:"enable-compression" yaml:"enable-compression" usage:"enable gzip compression for response"`
+	// EnableCSRFCheck enables CSRF protection between authorise/callback using cookies and state parameter
+	EnableCSRFCheck bool `json:"enable-csrf-check" yaml:"enable-csrf-check" usage:"enable crsf check between authorise and callback"`
 
 	// AccessTokenDuration is default duration applied to the access token cookie
 	AccessTokenDuration time.Duration `json:"access-token-duration" yaml:"access-token-duration" usage:"fallback cookie duration for the access token when using refresh tokens"`

@@ -19,6 +19,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"time"
@@ -97,8 +98,13 @@ func (r *oauthProxy) redirectToAuthorization(w http.ResponseWriter, req *http.Re
 	}
 
 	// step: add a state referrer to the authorization page
-	uuid := r.writeStateParameterCookie(req, w)
-	authQuery := fmt.Sprintf("?state=%s", uuid)
+	state, err := r.writeStateParameterCookie(req, w)
+	if err != nil {
+		r.log.Error("failed to create state parameter")
+		w.WriteHeader(http.StatusInternalServerError)
+		return r.revokeProxy(w, req)
+	}
+	authQuery := fmt.Sprintf("?state=%s", url.QueryEscape(state))
 
 	// step: if verification is switched off, we can't authorization
 	if r.config.SkipTokenVerification {

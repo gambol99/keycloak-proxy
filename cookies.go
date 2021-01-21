@@ -17,6 +17,7 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -119,8 +120,13 @@ func (r *oauthProxy) dropRefreshTokenCookie(req *http.Request, w http.ResponseWr
 	r.dropCookieWithChunks(req, w, r.config.CookieRefreshName, value, duration)
 }
 
+type StateParameter struct {
+	Token string `json:"token"`
+	Url   string `json:"url"`
+}
+
 // writeStateParameterCookie sets a state parameter cookie into the response
-func (r *oauthProxy) writeStateParameterCookie(req *http.Request, w http.ResponseWriter) string {
+func (r *oauthProxy) writeStateParameterCookie(req *http.Request, w http.ResponseWriter) (string, error) {
 	uuid, err := uuid.NewV4()
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -128,7 +134,12 @@ func (r *oauthProxy) writeStateParameterCookie(req *http.Request, w http.Respons
 	requestURI := base64.StdEncoding.EncodeToString([]byte(req.URL.RequestURI()))
 	r.dropCookie(w, req.Host, requestURICookie, requestURI, 0)
 	r.dropCookie(w, req.Host, requestStateCookie, uuid.String(), 0)
-	return uuid.String()
+
+	stateParam := StateParameter{Token: uuid.String(),
+		Url: req.URL.RequestURI()}
+	output, err := json.Marshal(stateParam)
+
+	return string(output), err
 }
 
 // clearAllCookies is just a helper function for the below
